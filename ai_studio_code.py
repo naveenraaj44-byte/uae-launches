@@ -1,44 +1,50 @@
 import streamlit as st
-from lxml import etree
-import os
-import random
-import logging
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set the page configuration for the Streamlit app
+st.set_page_config(page_title='UAE Developer Launch Tracker', layout='wide')
 
-# Mock data with multiple image variations
-images = [
-    "https://example.com/image1a.jpg",
-    "https://example.com/image1b.jpg",
-    "https://example.com/image2a.jpg",
-    "https://example.com/image2b.jpg",
-]
+class TierManager:
+    def __init__(self):
+        self.tiers = {'Tier 1': [], 'Tier 2': [], 'Tier 3': []}
 
-# Function to parse XML and handle errors
-def parse_xml(xml_content):
-    try:
-        tree = etree.fromstring(xml_content.encode('utf-8'))
-        return tree
-    except etree.XMLSyntaxError as e:
-        logging.error(f"XML Syntax Error: {e}")
-        st.error("There was an error parsing the XML data.")
-        return None
+    def add_launch(self, tier, launch):
+        if tier in self.tiers:
+            self.tiers[tier].append(launch)
 
-# Main Streamlit Application
+    def get_launches(self, tier):
+        return self.tiers.get(tier, [])
+
+class LaunchScraper:
+    def __init__(self, url):
+        self.url = url
+
+    def scrape(self):
+        import requests
+        from lxml import html
+        
+        response = requests.get(self.url)
+        tree = html.fromstring(response.content)
+        # Implement scraping logic here with lxml
+
 def main():
-    st.title("My Streamlit App")
+    st.title('UAE Developer Launch Tracker')
+    # Filters and data source selection
+    selected_tier = st.selectbox('Select Tier', ['Tier 1', 'Tier 2', 'Tier 3'])
+    launch_manager = TierManager()
 
-    xml_data = st.text_area("Input XML Data:")
-    if st.button("Parse XML"):
-        tree = parse_xml(xml_data)
-        if tree is not None:
-            st.success("XML parsed successfully!")
-            # Example usage with the mock data
-            image_choice = random.choice(images)
-            st.image(image_choice)
-        else:
-            st.error("Failed to parse XML.")
+    # Mock Data
+    mock_data = {
+        'Tier 1': ['Product A', 'Product B'],
+        'Tier 2': ['Product C'],
+        'Tier 3': ['Product D', 'Product E']
+    }
+    for tier, launches in mock_data.items():
+        for launch in launches:
+            launch_manager.add_launch(tier, launch)
 
-if __name__ == "__main__":
+    launches_to_display = launch_manager.get_launches(selected_tier)
+    st.write(f'Launches for {selected_tier}:')
+    st.write(launches_to_display)
+
+if __name__ == '__main__':
     main()
